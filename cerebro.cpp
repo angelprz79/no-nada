@@ -16,7 +16,7 @@ int main()
 
 	vector<string> alumnos2(n);			 // alumnos sin NL ---soporte para map
 	vector<pair<string, ll>> alumnos(n); // alumnos con NL por nombre prioridad
-	vector<string> alumnos3(n);			 // alumnos con NL por NL prioridad
+	vector<pair<ll,string>> alumnos3;			 // alumnos con NL por NL prioridad
 
 	while (opcion != 5){
 		cin >> opcion;
@@ -26,7 +26,7 @@ int main()
 			for (ll i = 0; i < n; i++){
 				cin >> alumnos[i].first;
 				cin >> alumnos[i].second;
-				alumnos3[alumnos[i].second] = alumnos[i].first;
+				alumnos3.push_back({alumnos[i].second,alumnos[i].first});
 			}
 			// aqui termina la primera opcion
 		}
@@ -57,7 +57,7 @@ int main()
 			// esto es la cuarta opcion
 			if (alumnos3.size() > 0){
 				sort(alumnos3.begin(), alumnos3.end());
-				for (ll i = 0; i < n; i++) cout << "NL: " << i + 1 << " Alumno: " << alumnos3[i] << '\n';
+				for (auto c: alumnos3) cout << "NL: " << c.first << " Alumno: " << c.second << '\n';
 			}
 			else for (ll i = 1; i <= n; i++) cout << "NL: " << i << " Alumno: " << ALUMNOS[i] << '\n';
 			// aqui termina la cuarta opcion
