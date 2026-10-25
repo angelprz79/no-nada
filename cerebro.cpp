@@ -14,52 +14,65 @@ int main()
 	ll opcion = 1; // numero de alumnos
 	cin >> n;
 
-	vector<string> alumnos2(n); // alumnos sin NL ---soporte para map
-	vector<pair<string, ll>> alumnos(n); // alumnos con NL por nombre prioridad
+	vector<string> alumnos2; // alumnos sin NL ---soporte para map
+	vector<pair<string, ll>> alumnos; // alumnos con NL por nombre prioridad
 	vector<pair<ll,string>> alumnos3; // alumnos con NL por NL prioridad
 
 	while (opcion != 5){
-		cin >> opcion;
+		if (!(cin >> opcion)) break;
 		if (opcion == 1){
 			// esto es la primera opcion -------no se han ordenado
-
+			alumnos.clear(); // vacia los vectores para que no haya  problema de sobreescritura
+			alumnos3.clear(); // hace lo mismo que arriba
 			for (ll i = 0; i < n; i++){
-				cin >> alumnos[i].first;
-				cin >> alumnos[i].second;
-				alumnos3.push_back({alumnos[i].second,alumnos[i].first});
+				string aux;
+				ll aux2;
+				cin >> aux >> aux2;
+				alumnos.push_back({aux, aux2});
+				alumnos3.push_back({aux2, aux});
 			}
 			// aqui termina la primera opcion
 		}
 
 		if (opcion == 2){
 			// empieza la segunda opcion
-
-			for (ll i = 0; i < n; i++) cin >> alumnos2[i];
+			alumnos.clear();
+			alumnos3.clear();
+			alumnos2.clear();// vacia el vector para evitar problemas de sobreescritura
+			ALUMNOS.clear(); // se vacia el map para evitar lo de arriba
+			ALUMNOS2.clear(); // lo mismo de arriba
+			for (ll i = 0; i < n; i++){
+				string aux3;
+				cin >> aux3;
+				alumnos2.push_back(aux3);
+			}
 			sort(alumnos2.begin(), alumnos2.end());
-			for (ll i = 1; i <= n; i++){
-				ALUMNOS[i] = alumnos2[i - 1];
-				ALUMNOS2[alumnos2[i - 1]] = i;
+			ll i = 1;
+			for (auto c: alumnos2){
+				ALUMNOS[i] = c;
+				ALUMNOS2[c] = i;
+				i++;
 			}
 			// aqui termina la segunda opcion
 		}
 
 		if (opcion == 3) {
 			// esto es la tercera opcion
-			if (alumnos.size() > 0) {
+			if (!alumnos.empty()) {
 				sort(alumnos.begin(), alumnos.end());
-				for (auto c : alumnos) cout << "Alumno: " << c.first << " N.L: " << c.second << '\n'; // imprime alumnos con NL asignado
+				for (auto c : alumnos) cout << "\nAlumno: " << c.first << " N.L: " << c.second; // imprime alumnos con NL asignado
 			}
-			else for (auto c : ALUMNOS2) cout << "Alumno: " << c.first << " N:L: " << c.second << '\n'; // imprime alumnos sin NL asignado
+			else for (auto c : ALUMNOS2) cout << "\nAlumno: " << c.first << " N:L: " << c.second ; // imprime alumnos sin NL asignado
 			// aqui termina la tercera opcion
 		}
 
 		if (opcion == 4){
 			// esto es la cuarta opcion
-			if (alumnos3.size() > 0){
+			if (!alumnos3.empty()){
 				sort(alumnos3.begin(), alumnos3.end());
-				for (auto c: alumnos3) cout << "NL: " << c.first << " Alumno: " << c.second << '\n';
+				for (auto c: alumnos3) cout << "\nNL: " << c.first << " Alumno: " << c.second;
 			}
-			else for (ll i = 1; i <= n; i++) cout << "NL: " << i << " Alumno: " << ALUMNOS[i] << '\n';
+			else for (ll i = 1; i <= n; i++) cout << "\nNL: " << i << " Alumno: " << ALUMNOS[i];
 			// aqui termina la cuarta opcion
 		}
 	}
