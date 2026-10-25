@@ -1,6 +1,6 @@
 #!/bin/bash
 
-g++ main.cpp -o programa || exit 1
+g++ cerebro.cpp -o programa || exit 1
 echo "--------Bienvenidos al programa de BigData Sets--------"
 read -r -p "Ingrese cantidad de alumnos: " cantidad
 if ! [[ "$cantidad" =~ ^[1-9][0-9]*$ ]]; then
