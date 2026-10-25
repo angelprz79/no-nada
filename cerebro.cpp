@@ -14,9 +14,9 @@ int main()
 	ll opcion = 1; // numero de alumnos
 	cin >> n;
 
-	vector<string> alumnos2(n);			 // alumnos sin NL ---soporte para map
+	vector<string> alumnos2(n); // alumnos sin NL ---soporte para map
 	vector<pair<string, ll>> alumnos(n); // alumnos con NL por nombre prioridad
-	vector<pair<ll,string>> alumnos3;			 // alumnos con NL por NL prioridad
+	vector<pair<ll,string>> alumnos3; // alumnos con NL por NL prioridad
 
 	while (opcion != 5){
 		cin >> opcion;
