@@ -62,7 +62,8 @@ int main()
 				sort(alumnos.begin(), alumnos.end());
 				for (auto c : alumnos) cout << "\nAlumno: " << c.first << " N.L: " << c.second; // imprime alumnos con NL asignado
 			}
-			else for (auto c : ALUMNOS2) cout << "\nAlumno: " << c.first << " N:L: " << c.second ; // imprime alumnos sin NL asignado
+			else if(!ALUMNOS2.empty())for (auto c : ALUMNOS2) cout << "\nAlumno: " << c.first << " N:L: " << c.second ; // imprime alumnos sin NL asignado
+			else cout << "\nNo has ingresado ningun alumno\n\n";
 			// aqui termina la tercera opcion
 		}
 
@@ -72,8 +73,10 @@ int main()
 				sort(alumnos3.begin(), alumnos3.end());
 				for (auto c: alumnos3) cout << "\nNL: " << c.first << " Alumno: " << c.second;
 			}
-			else for (ll i = 1; i <= n; i++) cout << "\nNL: " << i << " Alumno: " << ALUMNOS[i];
+			else if(!ALUMNOS.empty())for (ll i = 1; i <= n; i++) cout << "\nNL: " << i << " Alumno: " << ALUMNOS[i];
+			else cout <<"\nNo has ingresado ningun alumno\n\n";
 			// aqui termina la cuarta opcion
 		}
+		cout << "\n__FIN_ACCION__\n" << flush;
 	}
 }
