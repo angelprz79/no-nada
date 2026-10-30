@@ -58,8 +58,8 @@ Si aparece un texto que empieza con `g++.exe` y un número de versión, **todo e
 ### Paso 5: Ejecutar el programa
 
 1. Descarga o clona este repositorio.
-2. Asegúrate de que `cerebro.cpp` y `ejecutar.bat` estén **en la misma carpeta**.
-3. Haz **doble clic** en `ejecutar.bat`.
+2. Asegúrate de que `cerebro.cpp` y `codigos-windows.bat` estén **en la misma carpeta**.
+3. Haz **doble clic** en `codigos-windows.bat`.
 
 El programa se compila solo y se abre listo para usar.
 
