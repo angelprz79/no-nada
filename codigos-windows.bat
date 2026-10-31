@@ -1,67 +1,91 @@
 @echo off
 chcp 65001 >nul
-cd /d "%~dp0"
-
-where g++ >nul 2>&1
-if errorlevel 1 (
-    echo No se encontro g++ en el PATH.
-    echo Instala MinGW-w64 o MSYS2 y agrega su carpeta bin al PATH.
-    pause
-    exit /b 1
-)
-
-g++ cerebro.cpp -o programa.exe
-if errorlevel 1 (
-    echo Error al compilar cerebro.cpp
-    pause
-    exit /b 1
-)
-
-powershell -NoProfile -ExecutionPolicy Bypass -Command "$s=[IO.File]::ReadAllText('%~f0'); Invoke-Expression $s.Substring($s.LastIndexOf('#PS_START'))"
-set "codigo=%errorlevel%"
+title BigData Sets
+set "ARCHIVO_BAT=%~f0"
+powershell -NoProfile -ExecutionPolicy Bypass -Command "$b=[IO.File]::ReadAllBytes($env:ARCHIVO_BAT); try{$s=[Text.UTF8Encoding]::new($false,$true).GetString($b)}catch{$s=[Text.Encoding]::GetEncoding(1252).GetString($b)}; Invoke-Expression ($s.Substring($s.LastIndexOf('#PS_START')))"
+set "CODIGO=%errorlevel%"
+echo.
 pause
-exit /b %codigo%
+exit /b %CODIGO%
 
 #PS_START
+# ===========================================================================
+#  BigData Sets - programa unico (reemplaza a cerebro.cpp + el script bash)
+#  No necesita compilador: todo se ejecuta con el PowerShell que trae Windows.
+# ===========================================================================
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
-$utf8 = New-Object Text.UTF8Encoding($false)
 
+# ---------------------------- utilidades -----------------------------------
+function Leer-Texto([string]$mensaje) {
+    $t = Read-Host $mensaje
+    if ($null -eq $t) { exit 1 }      # entrada cerrada (Ctrl+Z / Ctrl+C)
+    return $t.Trim()
+}
+
+function Mostrar-Error([string]$mensaje) {
+    Write-Host $mensaje -ForegroundColor Red
+}
+
+# Opcion 2: pide un nombre (no puede quedar vacio)
+function Leer-Nombre([int]$i) {
+    while ($true) {
+        $t = Leer-Texto "Nombre del alumno $i"
+        if ($t -ne '') { return $t }
+        Mostrar-Error 'El nombre no puede estar vacío.'
+    }
+}
+
+# Opcion 1: pide "nombre numerolista" (el numero es lo ultimo de la linea)
+function Leer-AlumnoConNL([int]$i) {
+    while ($true) {
+        $linea = Leer-Texto "Alumno $i [nombre] [numerolista]"
+        if ($linea -match '^(.+?)\s+([0-9]{1,15})$' -and [long]$Matches[2] -ge 1) {
+            return [pscustomobject]@{ Nombre = $Matches[1].Trim(); NL = [long]$Matches[2] }
+        }
+        Mostrar-Error 'Formato inválido. Escribe el nombre, un espacio y el número de lista (entero positivo). Ejemplo: Ana 5'
+    }
+}
+
+# Comparadores identicos a los de C++ (comparacion por bytes: mayusculas antes
+# que minusculas), no los de Windows, que ignoran mayusculas/minusculas.
+# Equivale a sort() sobre vector<pair<string,ll>>: primero nombre, luego NL.
+$cmpPorNombre = [Comparison[object]]{
+    param($x, $y)
+    $c = [string]::CompareOrdinal($x.Nombre, $y.Nombre)
+    if ($c -ne 0) { return $c }
+    return $x.NL.CompareTo($y.NL)
+}
+# Equivale a sort() sobre vector<pair<ll,string>>: primero NL, luego nombre.
+$cmpPorNL = [Comparison[object]]{
+    param($x, $y)
+    $c = $x.NL.CompareTo($y.NL)
+    if ($c -ne 0) { return $c }
+    return [string]::CompareOrdinal($x.Nombre, $y.Nombre)
+}
+
+# ------------------------------ bienvenida ---------------------------------
 Write-Host '-------------------------------------------------------'
 Write-Host '      Bienvenidos al programa de BigData Sets'
 Write-Host '-------------------------------------------------------'
 Write-Host ''
 
-$cantidad = Read-Host 'Ingrese cantidad de alumnos'
-if ($cantidad -notmatch '^[1-9][0-9]*$') {
-    [Console]::Error.WriteLine('La cantidad debe ser un entero positivo.')
-    exit 1
-}
-$cantidad = [int]$cantidad
-
-$psi = New-Object System.Diagnostics.ProcessStartInfo
-$psi.FileName = Join-Path (Get-Location) 'programa.exe'
-$psi.UseShellExecute = $false
-$psi.RedirectStandardInput = $true
-$psi.RedirectStandardOutput = $true
-$psi.StandardOutputEncoding = $utf8
-$proc = [System.Diagnostics.Process]::Start($psi)
-
-$entrada = New-Object IO.StreamWriter($proc.StandardInput.BaseStream, $utf8)
-$entrada.NewLine = "`n"
-$entrada.AutoFlush = $true
-$salida = $proc.StandardOutput
-
-function Esperar-Respuesta {
-    while ($null -ne ($linea = $salida.ReadLine())) {
-        if ($linea -eq '__FIN_ACCION__') { return $true }
-        Write-Host $linea
-    }
-    [Console]::Error.WriteLine('El programa terminó antes de completar la acción.')
-    return $false
+$n = 0
+while ($true) {
+    $t = Leer-Texto 'Ingrese cantidad de alumnos'
+    if ($t -match '^[1-9][0-9]{0,5}$') { $n = [int]$t; break }
+    Mostrar-Error 'La cantidad debe ser un entero positivo.'
 }
 
-$entrada.WriteLine($cantidad)
+# ------------------- estructuras (las mismas que en cerebro.cpp) ------------
+# alumnos / alumnos3 en C++: alumnos CON numero de lista
+$alumnosConNL = [System.Collections.Generic.List[object]]::new()
+# ALUMNOS en C++: alumnos SIN numero de lista, el indice i-1 es el NL asignado i
+$sinNLPorNL = [System.Collections.Generic.List[string]]::new()
+# ALUMNOS2 en C++: alumnos SIN numero de lista ordenados por nombre
+# (si un nombre se repite, queda una sola entrada con el ultimo NL, igual que map)
+$sinNLPorNombre = [System.Collections.Generic.SortedDictionary[string,long]]::new([StringComparer]::Ordinal)
 
+# --------------------------------- menu ------------------------------------
 while ($true) {
     Write-Host ''
     Write-Host '---------------------- MENÚ ----------------------'
@@ -72,30 +96,86 @@ while ($true) {
     Write-Host '5.- Salir'
     Write-Host ''
 
-    $opcion = Read-Host 'Elija una opción'
-    if ($opcion -notin '1','2','3','4','5') {
-        [Console]::Error.WriteLine('Opción inválida. Intente de nuevo.')
+    $opcion = Leer-Texto 'Elija una opción'
+    if ($opcion -notmatch '^[1-5]$') {
+        Mostrar-Error 'Opción inválida. Intente de nuevo.'
         continue
     }
 
-    $entrada.WriteLine($opcion)
-
     if ($opcion -eq '1') {
-        for ($i = 1; $i -le $cantidad; $i++) {
-            $datos = Read-Host "Alumno $i [nombre] [numerolista]"
-            $entrada.WriteLine($datos)
+        # Ingresar alumnos con numero de lista (vacia solo la lista con NL)
+        $alumnosConNL.Clear()
+        for ($i = 1; $i -le $n; $i++) {
+            $alumnosConNL.Add((Leer-AlumnoConNL $i))
         }
+        Write-Host ''
     }
     elseif ($opcion -eq '2') {
-        for ($i = 1; $i -le $cantidad; $i++) {
-            $nombre = Read-Host "Nombre del alumno $i"
-            $entrada.WriteLine($nombre)
+        # Ingresar alumnos sin numero de lista: se ordenan por nombre y el NL
+        # se asigna segun la posicion (1..n). Vacia todo lo anterior.
+        $alumnosConNL.Clear()
+        $sinNLPorNL.Clear()
+        $sinNLPorNombre.Clear()
+        $nombres = [System.Collections.Generic.List[string]]::new()
+        for ($i = 1; $i -le $n; $i++) {
+            $nombres.Add((Leer-Nombre $i))
+        }
+        $nombres.Sort([StringComparer]::Ordinal)
+        $k = 1
+        foreach ($nombre in $nombres) {
+            $sinNLPorNL.Add($nombre)
+            $sinNLPorNombre[$nombre] = $k
+            $k++
+        }
+        Write-Host ''
+    }
+    elseif ($opcion -eq '3') {
+        # Ver alumnos por nombre
+        if ($alumnosConNL.Count -gt 0) {
+            $alumnosConNL.Sort($cmpPorNombre)
+            Write-Host ''
+            foreach ($al in $alumnosConNL) {
+                Write-Host "Alumno: $($al.Nombre) N.L: $($al.NL)"
+            }
+        }
+        elseif ($sinNLPorNombre.Count -gt 0) {
+            Write-Host ''
+            foreach ($par in $sinNLPorNombre.GetEnumerator()) {
+                Write-Host "Alumno: $($par.Key) N:L: $($par.Value)"
+            }
+        }
+        else {
+            Write-Host ''
+            Write-Host 'No has ingresado ningun alumno'
+            Write-Host ''
+            Write-Host ''
         }
     }
-
-    if (-not (Esperar-Respuesta)) { break }
-    if ($opcion -eq '5') { break }
+    elseif ($opcion -eq '4') {
+        # Ver alumnos por numero de lista
+        if ($alumnosConNL.Count -gt 0) {
+            $alumnosConNL.Sort($cmpPorNL)
+            Write-Host ''
+            foreach ($al in $alumnosConNL) {
+                Write-Host "NL: $($al.NL) Alumno: $($al.Nombre)"
+            }
+        }
+        elseif ($sinNLPorNL.Count -gt 0) {
+            Write-Host ''
+            for ($i = 1; $i -le $sinNLPorNL.Count; $i++) {
+                Write-Host "NL: $i Alumno: $($sinNLPorNL[$i - 1])"
+            }
+        }
+        else {
+            Write-Host ''
+            Write-Host 'No has ingresado ningun alumno'
+            Write-Host ''
+            Write-Host ''
+        }
+    }
+    else {
+        # Salir
+        Write-Host ''
+        break
+    }
 }
-
-$entrada.Close()
-$proc.WaitForExit()
