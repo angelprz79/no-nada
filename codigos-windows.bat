@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul & rem activa UTF-8 para que se vean los acentos
-title BigData Sets
+title Listado de alumnos
 set "ARCHIVO_BAT=%~f0"
 powershell -NoProfile -ExecutionPolicy Bypass -Command "$b=[IO.File]::ReadAllBytes($env:ARCHIVO_BAT); try{$s=[Text.UTF8Encoding]::new($false,$true).GetString($b)}catch{$s=[Text.Encoding]::GetEncoding(1252).GetString($b)}; Invoke-Expression ($s.Substring($s.LastIndexOf('#PS_START')))" & rem ejecuta el programa que esta mas abajo
 set "CODIGO=%errorlevel%"
